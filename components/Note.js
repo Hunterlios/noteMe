@@ -1,15 +1,28 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import React from "react";
 
-const Note = () => {
+const createTwoButtonAlert = (prio) =>
+  Alert.alert("Note priority", `${prio}`, [
+    { text: "OK", onPress: () => console.log("OK Pressed") },
+  ]);
+
+const Note = ({ item, onPress, backgroundColor, textColor }) => {
   return (
-    <View style={styles.item}>
+    <TouchableOpacity
+      style={[styles.item, { backgroundColor }]}
+      onPress={() => {
+        onPress;
+        createTwoButtonAlert(item.prio);
+      }}
+    >
       <View style={styles.itemLeft}>
         <TouchableOpacity style={styles.square}></TouchableOpacity>
-        <Text style={styles.itemText}>This is a note</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>
+          {item.title}
+        </Text>
       </View>
       <View style={styles.circular}></View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
