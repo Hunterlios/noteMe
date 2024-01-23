@@ -1,91 +1,136 @@
-import {
-  View,
-  Button,
-  TextInput,
-  Text,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { View, Button, TextInput, Text, TouchableOpacity } from "react-native";
 import { FIREBASE_DB } from "../../firebaseConfig";
-import {
-  addDoc,
-  collection,
-  onSnapshot,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
+import { setDoc, getDocs, collection, doc } from "firebase/firestore";
 import { StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
+// import DropdownPicker from "../../components/DropdownPicker";
+import DropDownPicker from "react-native-dropdown-picker";
+import ChildrenList from "../../components/ChildrenList";
+import { useCollectionData } from "react-firebase-hooks/firestore";
 
 const List = ({ navigation }) => {
-  const [notes, setNotes] = useState([]);
+  const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  const query = collection(FIREBASE_DB, "categories");
+  const [docs, loading, error, snapshot] = useCollectionData(query);
+
+  const getCategories = async () => {
+    const query = collection(FIREBASE_DB, "categories");
+    const snapshot = await getDocs(query);
+    const categories = [];
+    snapshot.docs?.forEach((doc) => {
+      categories.push({ label: doc.data().name, value: doc.data().name });
+    });
+    setCategories(categories);
+  };
 
   useEffect(() => {
-    const notesRef = collection(FIREBASE_DB, "notes");
-    const subscriber = onSnapshot(notesRef, {
-      next: (snapshot) => {
-        const notes = [];
-        snapshot.docs.forEach((doc) => {
-          notes.push({ id: doc.id, ...doc.data() });
-        });
-        setNotes(notes);
-      },
-    });
-    return () => subscriber();
-  }, []);
+    getCategories();
+  }, [docs]);
 
-  const addNote = async () => {
-    const doc = await addDoc(collection(FIREBASE_DB, "notes"), {
-      title: note,
-    });
-    setNote("");
+  const handleSubmit = async (path) => {
+    const docRef = doc(FIREBASE_DB, path, title);
+    await setDoc(docRef, { title: title, note: note });
   };
 
-  const renderNotes = ({ item }) => {
-    const ref = doc(FIREBASE_DB, `notes/${item.id}`);
-
-    const getDetails = async () => {
-      navigation.navigate("Details", { title: item.title });
-    };
-
-    const deleteNote = async () => {
-      deleteDoc(ref);
-    };
-
-    return (
-      <View style={styles.noteContainer}>
-        <TouchableOpacity onPress={getDetails} style={styles.note}>
-          <Text style={styles.noteText}>{item.title}</Text>
-        </TouchableOpacity>
-        <Ionicons
-          name="trash-bin-outline"
-          size={24}
-          color="red"
-          onPress={deleteNote}
-        />
-      </View>
-    );
+  const handleAddCategory = async () => {
+    const docRef = doc(FIREBASE_DB, "categories", category);
+    await setDoc(docRef, { name: category });
   };
+
+  // const renderNotes = ({ item }) => {
+  //   const getDetails = async () => {
+  //     navigation.navigate("Details", { title: item.title });
+  //   };
+
+  //   const deleteNote = async () => {
+  //     deleteDoc(docs);
+  //   };
+
+  //   return (
+  //     <View style={styles.noteContainer}>
+  //       <TouchableOpacity onPress={getDetails} style={styles.note}>
+  //         <Text style={styles.noteText}>{item.name}</Text>
+  //       </TouchableOpacity>
+  //       <Ionicons
+  //         name="trash-bin-outline"
+  //         size={24}
+  //         color="red"
+  //         onPress={deleteNote}
+  //       />
+  //     </View>
+  //   );
+  // };
 
   return (
     <View style={styles.container}>
+      <View style={styles.picker}>
+        {/* <DropdownPicker
+          onChangeText={() => {
+            console.log(), setCategory(value);
+          }}
+        /> */}
+        <DropDownPicker
+          open={open}
+          value={category}
+          items={categories}
+          setOpen={setOpen}
+          setValue={setCategory}
+          onChangeValue={handleAddCategory}
+          searchable={true}
+          style={styles.picker}
+          placeholder="Category"
+          searchTextInputProps={{
+            maxLength: 25,
+          }}
+          addCustomItem={true}
+          placeholderStyle={{
+            color: "gray",
+          }}
+        />
+      </View>
       <View style={styles.form}>
         <TextInput
-          placeholder="Add new note"
+          placeholder="Add title"
+          onChangeText={(text) => setTitle(text)}
+          value={title}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Add note"
           onChangeText={(text) => setNote(text)}
           value={note}
           style={styles.input}
         />
-        <Button onPress={addNote} title="Add note" disabled={note === ""} />
+        <View style={styles.btn}>
+          <Button
+            onPress={() => {
+              handleSubmit(`categories/${category}/children`),
+                setNote(""),
+                setTitle("");
+            }}
+            title="Add new note"
+            disabled={note === "" || title === ""}
+          />
+        </View>
       </View>
-      {notes.length > 0 && (
-        <FlatList
-          data={notes}
-          renderItem={renderNotes}
-          keyExtractor={(note) => note.id}
-        />
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        docs.map((doc) => (
+          <View key={doc.name} style={styles.noteContainer}>
+            <TouchableOpacity style={styles.note}>
+              <Text style={styles.noteText}>{doc.name}</Text>
+            </TouchableOpacity>
+            <Ionicons name="trash-bin-outline" size={24} color="red" />
+            <ChildrenList path={`categories/${doc.name}/children`} />
+          </View>
+        ))
       )}
     </View>
   );
@@ -100,13 +145,13 @@ const styles = StyleSheet.create({
   form: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: 10,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    height: 40,
-    borderRadius: 5,
+    height: 50,
+    borderRadius: 8,
     padding: 10,
     backgroundColor: "white",
   },
@@ -125,5 +170,12 @@ const styles = StyleSheet.create({
   },
   note: {
     flex: 1,
+  },
+  btn: {
+    marginLeft: 10,
+  },
+  picker: {
+    zIndex: 1,
+    marginVertical: 10,
   },
 });
