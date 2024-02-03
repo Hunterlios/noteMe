@@ -8,6 +8,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DropDownPicker from "react-native-dropdown-picker";
 import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
+import { deleteDoc } from "firebase/firestore";
+
 
 const List = ({ navigation }) => {
   const [title, setTitle] = useState("");
@@ -18,6 +20,11 @@ const List = ({ navigation }) => {
 
   const query = collection(FIREBASE_DB, "categories");
   const [docs, loading, error, snapshot] = useCollectionData(query);
+
+    const deleteCategory = async (categoryName) => {
+    const categoryRef = doc(FIREBASE_DB, "categories", categoryName);
+    await deleteDoc(categoryRef);
+  };
 
   const getCategories = async () => {
     const query = collection(FIREBASE_DB, "categories");
@@ -127,7 +134,12 @@ const List = ({ navigation }) => {
             <TouchableOpacity style={styles.note}>
               <Text style={styles.noteText}>{doc.name}</Text>
             </TouchableOpacity>
-            <Ionicons name="trash-bin-outline" size={24} color="red" />
+            <Ionicons
+              name="trash-bin-outline"
+              size={24}
+              color="red"
+              onPress={() => deleteCategory(doc.name)}
+            />
             <ChildrenList path={`categories/${doc.name}/children`} />
           </View>
         ))
