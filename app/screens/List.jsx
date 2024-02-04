@@ -4,12 +4,10 @@ import { setDoc, getDocs, collection, doc } from "firebase/firestore";
 import { StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
-// import DropdownPicker from "../../components/DropdownPicker";
 import DropDownPicker from "react-native-dropdown-picker";
 import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { deleteDoc } from "firebase/firestore";
-
 
 const List = ({ navigation }) => {
   const [title, setTitle] = useState("");
@@ -21,9 +19,18 @@ const List = ({ navigation }) => {
   const query = collection(FIREBASE_DB, "categories");
   const [docs, loading, error, snapshot] = useCollectionData(query);
 
-    const deleteCategory = async (categoryName) => {
-    const categoryRef = doc(FIREBASE_DB, "categories", categoryName);
-    await deleteDoc(categoryRef);
+  const deleteCategory = async (category) => {
+    const categoryRef = doc(FIREBASE_DB, `categories/${category.name}`);
+    const colRef = collection(
+      FIREBASE_DB,
+      `categories/${category.name}/children`
+    );
+    const snapshot = await getDocs(colRef);
+    snapshot.docs?.forEach((doc) => {
+      deleteDoc(doc.ref);
+    });
+    deleteDoc(categoryRef);
+    setCategory(null);
   };
 
   const getCategories = async () => {
@@ -38,7 +45,7 @@ const List = ({ navigation }) => {
 
   useEffect(() => {
     getCategories();
-  }, [docs]);
+  }, [open]);
 
   const handleSubmit = async (path) => {
     const docRef = doc(FIREBASE_DB, path, title);
@@ -77,11 +84,6 @@ const List = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.picker}>
-        {/* <DropdownPicker
-          onChangeText={() => {
-            console.log(), setCategory(value);
-          }}
-        /> */}
         <DropDownPicker
           open={open}
           value={category}
@@ -119,10 +121,11 @@ const List = ({ navigation }) => {
             onPress={() => {
               handleSubmit(`categories/${category}/children`),
                 setNote(""),
-                setTitle("");
+                setTitle(""),
+                setCategory(null);
             }}
             title="Add new note"
-            disabled={note === "" || title === ""}
+            disabled={note === "" || title === "" || category === null}
           />
         </View>
       </View>
@@ -138,7 +141,7 @@ const List = ({ navigation }) => {
               name="trash-bin-outline"
               size={24}
               color="red"
-              onPress={() => deleteCategory(doc.name)}
+              onPress={() => deleteCategory(doc)}
             />
             <ChildrenList path={`categories/${doc.name}/children`} />
           </View>
