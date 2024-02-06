@@ -8,6 +8,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { deleteDoc } from "firebase/firestore";
+import Notification from "../../components/Notification";
 
 const List = ({ navigation }) => {
   const [title, setTitle] = useState("");
@@ -57,30 +58,6 @@ const List = ({ navigation }) => {
     await setDoc(docRef, { name: category });
   };
 
-  // const renderNotes = ({ item }) => {
-  //   const getDetails = async () => {
-  //     navigation.navigate("Details", { title: item.title });
-  //   };
-
-  //   const deleteNote = async () => {
-  //     deleteDoc(docs);
-  //   };
-
-  //   return (
-  //     <View style={styles.noteContainer}>
-  //       <TouchableOpacity onPress={getDetails} style={styles.note}>
-  //         <Text style={styles.noteText}>{item.name}</Text>
-  //       </TouchableOpacity>
-  //       <Ionicons
-  //         name="trash-bin-outline"
-  //         size={24}
-  //         color="red"
-  //         onPress={deleteNote}
-  //       />
-  //     </View>
-  //   );
-  // };
-
   return (
     <View style={styles.container}>
       <View style={styles.picker}>
@@ -103,6 +80,7 @@ const List = ({ navigation }) => {
           }}
         />
       </View>
+      <Notification />
       <View style={styles.form}>
         <TextInput
           placeholder="Add title"
@@ -143,7 +121,10 @@ const List = ({ navigation }) => {
               color="red"
               onPress={() => deleteCategory(doc)}
             />
-            <ChildrenList path={`categories/${doc.name}/children`} />
+            <ChildrenList
+              key={doc.name}
+              path={`categories/${doc.name}/children`}
+            />
           </View>
         ))
       )}
