@@ -116,17 +116,27 @@ const List = ({ navigation }) => {
           value={note}
           style={styles.input}
         />
-        <View style={styles.btn}>
-          <Button
-            onPress={() => {
-              handleSubmit(`categories/${category}/children`),
-                setNote(""),
-                setTitle(""),
-                setCategory(null);
-            }}
-            title="Add new note"
-            disabled={note === "" || title === "" || category === null}
-          />
+        <View style={styles.btnContainer}>
+          <View style={styles.btn}>
+            <Button
+              onPress={() => {
+                handleSubmit(`categories/${category}/children`),
+                  setNote(""),
+                  setTitle(""),
+                  setCategory(null);
+              }}
+              title="Add new note"
+              disabled={note === "" || title === "" || category === null}
+            />
+          </View>
+          <View style={styles.btn}>
+            <Button
+              onPress={() => {
+                // W tym miejscu Kuba bedzie używane DataTimePicker :)
+              }}
+              title="Set time"
+            />
+          </View>
         </View>
       </View>
       {loading ? (
