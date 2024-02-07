@@ -1,11 +1,4 @@
-import {
-  View,
-  Button,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, Button, TextInput, Text, ScrollView } from "react-native";
 import { FIREBASE_DB } from "../../firebaseConfig";
 import { setDoc, getDocs, collection, doc } from "firebase/firestore";
 import { StyleSheet } from "react-native";
@@ -120,6 +113,14 @@ const List = ({ navigation }) => {
               maxLength: 25,
             }}
             addCustomItem={true}
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            dropDownContainerStyle={{
+              position: "relative",
+              top: 0,
+            }}
             placeholderStyle={{
               color: "gray",
             }}
@@ -134,6 +135,14 @@ const List = ({ navigation }) => {
             setValue={setPrio}
             style={styles.picker}
             placeholder="Priority"
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            dropDownContainerStyle={{
+              position: "relative",
+              top: 0,
+            }}
             placeholderStyle={{
               color: "gray",
             }}
@@ -141,14 +150,14 @@ const List = ({ navigation }) => {
         </View>
       </View>
 
-      <View>
-        <Text>Notification</Text>
+      <View style={styles.notification}>
+        <Text style={styles.notificationText}>Notification</Text>
         <View style={styles.notifBtn}>
           <View style={styles.dateBtn}>
-            <Button onPress={showDatepicker} title="Date" />
+            <Button color="#7402cc" onPress={showDatepicker} title="Date" />
           </View>
           <View style={styles.dateBtn}>
-            <Button onPress={showTimepicker} title="Time" />
+            <Button color="#7402cc" onPress={showTimepicker} title="Time" />
           </View>
 
           {show && (
@@ -169,16 +178,19 @@ const List = ({ navigation }) => {
           placeholder="Add title"
           onChangeText={(text) => setTitle(text)}
           value={title}
+          maxLength={25}
           style={styles.input}
         />
         <TextInput
           placeholder="Add note"
           onChangeText={(text) => setNote(text)}
           value={note}
+          maxLength={150}
           style={styles.input}
         />
         <View style={styles.btnContainer}>
           <Button
+            color="#7402cc"
             onPress={() => {
               handleSubmit(`categories/${category}/children`),
                 schedulePushNotification(title, note, date),
@@ -192,29 +204,31 @@ const List = ({ navigation }) => {
               note === "" || title === "" || category === null || prio === null
             }
           />
-
-          <View style={styles.btn}></View>
         </View>
       </View>
+      <View style={styles.line} />
       <ScrollView>
         {loading ? (
           <Text>Loading...</Text>
         ) : (
           docs.map((doc) => (
-            <View key={doc.name} style={styles.noteContainer}>
-              <TouchableOpacity style={styles.note}>
+            <View key={doc.name} style={styles.categoryContainer}>
+              <View style={styles.noteContainer}>
                 <Text style={styles.noteText}>{doc.name}</Text>
-              </TouchableOpacity>
-              <Ionicons
-                name="trash-bin-outline"
-                size={24}
-                color="red"
-                onPress={() => deleteCategory(doc)}
-              />
-              <ChildrenList
-                key={doc.name}
-                path={`categories/${doc.name}/children`}
-              />
+                <Ionicons
+                  name="trash-bin-outline"
+                  size={24}
+                  color="white"
+                  onPress={() => deleteCategory(doc)}
+                />
+              </View>
+              <View style={styles.childList}>
+                <ChildrenList
+                  key={doc.name}
+                  path={`categories/${doc.name}/children`}
+                  navigation={navigation}
+                />
+              </View>
             </View>
           ))
         )}
@@ -227,11 +241,13 @@ export default List;
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
+    paddingBottom: 10,
+    height: "100%",
   },
   form: {
     flexDirection: "column",
     marginVertical: 10,
+    marginHorizontal: 15,
   },
   input: {
     borderWidth: 1,
@@ -242,32 +258,40 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     backgroundColor: "white",
   },
+  categoryContainer: {
+    flexDirection: "cloumn",
+    backgroundColor: "#7402cc",
+    borderRadius: 5,
+    marginVertical: 10,
+    marginHorizontal: 15,
+  },
   noteContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginHorizontal: 10,
+    marginVertical: 10,
     alignItems: "center",
+  },
+  childList: {
+    backgroundColor: "#c9b2db",
     padding: 10,
-    backgroundColor: "yellow",
-    marginVertical: 5,
     borderRadius: 5,
+    width: "100%",
   },
   noteText: {
-    fontSize: 16,
-    paddingHorizontal: 10,
-  },
-  note: {
-    flex: 1,
+    fontSize: 20,
+    color: "white",
   },
 
   btnContainer: {
-    flexDirection: "row",
-    width: 200,
+    width: "100%",
     marginVertical: 10,
   },
 
   dropDownPickers: {
     flexDirection: "column",
     marginVertical: 15,
+    marginHorizontal: 15,
     zIndex: 1000,
   },
 
@@ -281,11 +305,35 @@ const styles = StyleSheet.create({
   },
   notifBtn: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "start",
     marginVertical: 5,
+  },
+  notification: {
+    marginHorizontal: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  notificationText: {
+    fontSize: 16,
+    marginHorizontal: 15,
   },
   dateBtn: {
     marginHorizontal: 5,
     width: 100,
+  },
+
+  line: {
+    width: "100%",
+    height: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 1,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
   },
 });
