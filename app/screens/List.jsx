@@ -241,12 +241,12 @@ export default List;
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 10,
+    paddingBottom: 5,
     height: "100%",
   },
   form: {
     flexDirection: "column",
-    marginVertical: 10,
+    marginVertical: 5,
     marginHorizontal: 15,
   },
   input: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: "cloumn",
     backgroundColor: "#7402cc",
     borderRadius: 5,
-    marginVertical: 10,
+    marginVertical: 5,
     marginHorizontal: 15,
   },
   noteContainer: {
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
 
   dropDownPickers: {
     flexDirection: "column",
-    marginVertical: 15,
+    marginVertical: 10,
     marginHorizontal: 15,
     zIndex: 1000,
   },
