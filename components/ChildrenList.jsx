@@ -12,7 +12,9 @@ const ChildrenList = ({ path }) => {
       {loading ? (
         <Text>Loading...</Text>
       ) : (
-        docs?.map((doc) => <Text key={doc.title}>{doc.title}</Text>)
+        docs
+          .sort((a, b) => a.priority - b.priority)
+          .map((doc) => <Text key={doc.title}>{doc.title}</Text>)
       )}
     </View>
   );
