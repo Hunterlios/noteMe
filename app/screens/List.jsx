@@ -1,6 +1,6 @@
-import { View, Button, TextInput, Text, ScrollView } from "react-native";
+import { View, Button, TextInput, Text, ScrollView, TouchableOpacity } from "react-native";
 import { FIREBASE_DB } from "../../firebaseConfig";
-import { setDoc, getDocs, collection, doc } from "firebase/firestore";
+import { setDoc, getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -8,7 +8,6 @@ import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { deleteDoc } from "firebase/firestore";
 import { schedulePushNotification } from "../../notifications/Notification";
 import { Platform } from "react-native";
 
@@ -20,6 +19,8 @@ const List = ({ navigation }) => {
   const [category, setCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [prio, setPrio] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
   const priority = [
     { label: "High", value: 1 },
     { label: "Medium", value: 2 },
@@ -95,8 +96,12 @@ const List = ({ navigation }) => {
     await setDoc(docRef, { name: category });
   };
 
+  const toggleDarkMode = () => {
+    setDarkMode((prevMode) => !prevMode);
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: darkMode ? "#2b2042" : "white" }]}>
       <View style={styles.dropDownPickers}>
         <View style={styles.catPicker}>
           <DropDownPicker
@@ -151,7 +156,7 @@ const List = ({ navigation }) => {
       </View>
 
       <View style={styles.notification}>
-        <Text style={styles.notificationText}>Notification</Text>
+        <Text style={darkMode ? styles.notificationTextDarkMode : styles.notificationText}>Notification</Text>
         <View style={styles.notifBtn}>
           <View style={styles.dateBtn}>
             <Button color="#7402cc" onPress={showDatepicker} title="Date" />
@@ -176,33 +181,33 @@ const List = ({ navigation }) => {
       <View style={styles.form}>
         <TextInput
           placeholder="Add title"
+          placeholderTextColor={darkMode ? "white" : "black"}
           onChangeText={(text) => setTitle(text)}
           value={title}
           maxLength={25}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
         />
         <TextInput
           placeholder="Add note"
+          placeholderTextColor={darkMode ? "white" : "black"}
           onChangeText={(text) => setNote(text)}
           value={note}
           maxLength={150}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
         />
         <View style={styles.btnContainer}>
           <Button
             color="#7402cc"
             onPress={() => {
-              handleSubmit(`categories/${category}/children`),
-                schedulePushNotification(title, note, date),
-                setNote(""),
-                setTitle(""),
-                setCategory(null);
+              handleSubmit(`categories/${category}/children`);
+              schedulePushNotification(title, note, date);
+              setNote("");
+              setTitle("");
+              setCategory(null);
               setPrio(null);
             }}
             title="Add new note"
-            disabled={
-              note === "" || title === "" || category === null || prio === null
-            }
+            disabled={note === "" || title === "" || category === null || prio === null}
           />
         </View>
       </View>
@@ -212,9 +217,9 @@ const List = ({ navigation }) => {
           <Text>Loading...</Text>
         ) : (
           docs.map((doc) => (
-            <View key={doc.name} style={styles.categoryContainer}>
+            <View key={doc.name} style={[styles.categoryContainer, { backgroundColor: darkMode ? "#7402cc" : "#c9b2db" }]}>
               <View style={styles.noteContainer}>
-                <Text style={styles.noteText}>{doc.name}</Text>
+                <Text style={[styles.noteText, { color: darkMode ? "white" : "black" }]}>{doc.name}</Text>
                 <Ionicons
                   name="trash-bin-outline"
                   size={24}
@@ -233,6 +238,13 @@ const List = ({ navigation }) => {
           ))
         )}
       </ScrollView>
+
+      {/* Dark Mode Toggle Button */}
+      <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeButton}>
+        <Text style={styles.darkModeButtonText}>
+          {darkMode ? " ☀︎ " : " ☾ "}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -257,10 +269,10 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 5,
     backgroundColor: "white",
+    color: "black",
   },
   categoryContainer: {
-    flexDirection: "cloumn",
-    backgroundColor: "#7402cc",
+    flexDirection: "column",
     borderRadius: 5,
     marginVertical: 5,
     marginHorizontal: 15,
@@ -282,19 +294,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "white",
   },
-
   btnContainer: {
     width: "100%",
     marginVertical: 10,
   },
-
   dropDownPickers: {
     flexDirection: "column",
     marginVertical: 10,
     marginHorizontal: 15,
     zIndex: 1000,
   },
-
   catPicker: {
     zIndex: 2000,
     marginVertical: 5,
@@ -317,12 +326,17 @@ const styles = StyleSheet.create({
   notificationText: {
     fontSize: 16,
     marginHorizontal: 15,
+    color: "black",
+  },
+  notificationTextDarkMode: {
+    fontSize: 16,
+    marginHorizontal: 15,
+    color: "white",
   },
   dateBtn: {
     marginHorizontal: 5,
     width: 100,
   },
-
   line: {
     width: "100%",
     height: 1,
@@ -333,7 +347,19 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
-
     elevation: 3,
+  },
+  // Dark Mode Button Styles
+  darkModeButton: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    backgroundColor: "#7402cc",
+    padding: 10,
+    borderRadius: 8,
+  },
+  darkModeButtonText: {
+    color: "white",
+    fontSize: 26,
   },
 });
