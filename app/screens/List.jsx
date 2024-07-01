@@ -239,7 +239,6 @@ const List = ({ navigation }) => {
         )}
       </ScrollView>
 
-      {/* Dark Mode Toggle Button */}
       <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeButton}>
         <Text style={styles.darkModeButtonText}>
           {darkMode ? " ☀︎ " : " ☾ "}
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
     elevation: 3,
   },
-  // Dark Mode Button Styles
+
   darkModeButton: {
     position: "absolute",
     bottom: 20,

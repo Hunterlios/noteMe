@@ -1,6 +1,5 @@
-import { View, Text, TextInput, Button } from "react-native";
-import React from "react";
-import { useState } from "react";
+import { View, Text, TextInput, Button, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
 import { FIREBASE_DB } from "../../firebaseConfig";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -14,6 +13,8 @@ const Edit = ({ route }) => {
   const [note, setNote] = useState(_doc.note);
   const [prioOpen, setPrioOpen] = useState(false);
   const [prio, setPrio] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
   const priority = [
     { label: "High", value: 1 },
     { label: "Medium", value: 2 },
@@ -38,8 +39,12 @@ const Edit = ({ route }) => {
     setNote(null);
   };
 
+  const toggleDarkMode = () => {
+    setDarkMode((prevMode) => !prevMode);
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: darkMode ? "#2b2042" : "white" }]}>
       <View style={styles.prioPicker}>
         <DropDownPicker
           open={prioOpen}
@@ -51,25 +56,38 @@ const Edit = ({ route }) => {
             _doc.priority === 1
               ? "High"
               : _doc.priority === 2
-              ? "Medium"
-              : "Low"
+                ? "Medium"
+                : "Low"
           }
           placeholderStyle={{
-            color: "gray",
+            color: darkMode ? "white" : "gray",
+          }}
+          style={{
+            backgroundColor: darkMode ? "#5e5e5e" : "white",
+            borderColor: darkMode ? "#555" : "#ccc",
+          }}
+          dropDownContainerStyle={{
+            backgroundColor: darkMode ? "#5e5e5e" : "white",
+            borderColor: darkMode ? "#555" : "#ccc",
           }}
         />
       </View>
       <TextInput
-        style={styles.titleInput}
+        style={[styles.titleInput, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
         value={title}
         maxLength={25}
         onChangeText={(text) => setTitle(text === "" ? null : text)}
+        placeholder="Edit title"
+        placeholderTextColor={darkMode ? "white" : "black"}
       />
       <TextInput
-        style={styles.titleInput}
+        style={[styles.noteInput, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
         value={note}
         maxLength={150}
         onChangeText={(text) => setNote(text === "" ? null : text)}
+        placeholder="Edit note"
+        placeholderTextColor={darkMode ? "white" : "black"}
+        multiline
       />
       <View style={styles.btn}>
         <Button
@@ -79,6 +97,12 @@ const Edit = ({ route }) => {
           disabled={title === null && note === null && prio === null}
         />
       </View>
+
+      <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeButton}>
+        <Text style={styles.darkModeButtonText}>
+          {darkMode ? " ☀︎ " : " ☾ "}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -87,27 +111,48 @@ export default Edit;
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
-    marginVertical: 20,
-    height: "30%",
-    flexDirection: "column",
-    justifyContent: "space-between",
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   prioPicker: {
     zIndex: 1000,
-    marginVertical: 5,
+    width: "80%",
+    marginBottom: 20,
   },
   titleInput: {
     borderWidth: 1,
     height: 50,
-    width: "100%",
+    width: "80%",
     borderRadius: 8,
     padding: 10,
-    marginVertical: 5,
-    backgroundColor: "white",
+    marginBottom: 20,
+  },
+  noteInput: {
+    borderWidth: 1,
+    height: 150,
+    width: "80%",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 20,
+    textAlignVertical: "top",
   },
   btn: {
-    width: "100%",
-    marginVertical: 10,
+    width: "80%",
+    marginBottom: 20,
+  },
+
+  darkModeButton: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    backgroundColor: "#7402cc",
+    padding: 10,
+    borderRadius: 8,
+  },
+  darkModeButtonText: {
+    color: "white",
+    fontSize: 26,
   },
 });
