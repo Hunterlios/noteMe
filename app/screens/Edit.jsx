@@ -1,10 +1,10 @@
-import { View, Text, TextInput, Button, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, Button, TouchableOpacity, Image, StyleSheet } from "react-native";
 import React, { useState, useEffect } from "react";
 import { FIREBASE_DB } from "../../firebaseConfig";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import DropDownPicker from "react-native-dropdown-picker";
-import { StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const Edit = ({ route }) => {
   const { _doc } = route.params;
@@ -15,6 +15,7 @@ const Edit = ({ route }) => {
   const [prioOpen, setPrioOpen] = useState(false);
   const [prio, setPrio] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [adImage, setAdImage] = useState(null);
 
   const priority = [
     { label: "High", value: 1 },
@@ -24,6 +25,7 @@ const Edit = ({ route }) => {
 
   useEffect(() => {
     loadDarkModeState();
+    fetchAdImage();
   }, []);
 
   const loadDarkModeState = async () => {
@@ -67,6 +69,15 @@ const Edit = ({ route }) => {
     const newMode = !darkMode;
     setDarkMode(newMode);
     saveDarkModeState(newMode);
+  };
+
+  const fetchAdImage = async () => {
+    try {
+      const response = await axios.get("https://picsum.photos/200/300/?random");
+      setAdImage(response.request.responseURL);
+    } catch (error) {
+      console.error("Error fetching ad image:", error);
+    }
   };
 
   return (
@@ -123,6 +134,13 @@ const Edit = ({ route }) => {
           disabled={title === null && note === null && prio === null}
         />
       </View>
+      {adImage && (
+        <Image
+          source={{ uri: adImage }}
+          style={styles.adImage}
+          resizeMode="cover"
+        />
+      )}
     </View>
   );
 };
@@ -162,7 +180,12 @@ const styles = StyleSheet.create({
     width: "80%",
     marginBottom: 20,
   },
-
+  adImage: {
+    width: "80%",
+    height: 200,
+    marginTop: 20,
+    borderRadius: 8,
+  },
   darkModeButton: {
     position: "absolute",
     bottom: 20,
