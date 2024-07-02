@@ -1,4 +1,4 @@
-import { View, Button, TextInput, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Button, TextInput, Text, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { FIREBASE_DB } from "../../firebaseConfig";
 import { setDoc, getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { StyleSheet } from "react-native";
@@ -9,7 +9,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { schedulePushNotification } from "../../notifications/Notification";
-import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const List = ({ navigation }) => {
   const [title, setTitle] = useState("");
@@ -77,8 +77,28 @@ const List = ({ navigation }) => {
     setCategories(categories);
   };
 
+  const loadDarkModeState = async () => {
+    try {
+      const value = await AsyncStorage.getItem("darkMode");
+      if (value !== null) {
+        setDarkMode(JSON.parse(value));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveDarkModeState = async (value) => {
+    try {
+      await AsyncStorage.setItem("darkMode", JSON.stringify(value));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     getCategories();
+    loadDarkModeState();
   }, [open]);
 
   const handleSubmit = async (path) => {
@@ -97,7 +117,9 @@ const List = ({ navigation }) => {
   };
 
   const toggleDarkMode = () => {
-    setDarkMode((prevMode) => !prevMode);
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    saveDarkModeState(newMode);
   };
 
   return (
@@ -228,7 +250,8 @@ const List = ({ navigation }) => {
                 />
               </View>
               <View style={styles.childList}>
-                <ChildrenList
+                <
+                ChildrenList
                   key={doc.name}
                   path={`categories/${doc.name}/children`}
                   navigation={navigation}

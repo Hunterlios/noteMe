@@ -1,9 +1,10 @@
 import { View, Text, TextInput, Button, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FIREBASE_DB } from "../../firebaseConfig";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import DropDownPicker from "react-native-dropdown-picker";
 import { StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Edit = ({ route }) => {
   const { _doc } = route.params;
@@ -20,6 +21,29 @@ const Edit = ({ route }) => {
     { label: "Medium", value: 2 },
     { label: "Low", value: 3 },
   ];
+
+  useEffect(() => {
+    loadDarkModeState();
+  }, []);
+
+  const loadDarkModeState = async () => {
+    try {
+      const value = await AsyncStorage.getItem("darkMode");
+      if (value !== null) {
+        setDarkMode(JSON.parse(value));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveDarkModeState = async (value) => {
+    try {
+      await AsyncStorage.setItem("darkMode", JSON.stringify(value));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const updateDoc = async () => {
     const oldDocRef = doc(FIREBASE_DB, _path, _doc.title);
@@ -40,7 +64,9 @@ const Edit = ({ route }) => {
   };
 
   const toggleDarkMode = () => {
-    setDarkMode((prevMode) => !prevMode);
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    saveDarkModeState(newMode);
   };
 
   return (
@@ -97,12 +123,6 @@ const Edit = ({ route }) => {
           disabled={title === null && note === null && prio === null}
         />
       </View>
-
-      <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeButton}>
-        <Text style={styles.darkModeButtonText}>
-          {darkMode ? " ☀︎ " : " ☾ "}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 };
