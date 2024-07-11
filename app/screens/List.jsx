@@ -1,8 +1,15 @@
-import { View, Button, TextInput, Text, ScrollView, TouchableOpacity, Platform } from "react-native";
-import { FIREBASE_DB } from "../../firebaseConfig";
-import { setDoc, getDocs, collection, doc, deleteDoc } from "firebase/firestore";
-import { StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
+import {
+  View,
+  TextInput,
+  Text,
+  ScrollView,
+  Button,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
+import { collection, doc, getDocs, setDoc, deleteDoc } from "firebase/firestore";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DropDownPicker from "react-native-dropdown-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -10,6 +17,7 @@ import ChildrenList from "../../components/ChildrenList";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { schedulePushNotification } from "../../notifications/Notification";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FIREBASE_DB } from "../../firebaseConfig";
 
 const List = ({ navigation }) => {
   const [title, setTitle] = useState("");
@@ -20,6 +28,7 @@ const List = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [prio, setPrio] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const priority = [
     { label: "High", value: 1 },
@@ -32,8 +41,8 @@ const List = ({ navigation }) => {
   const [show, setShow] = useState(true ? Platform.OS === "ios" : false);
 
   const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
-    setShow(true ? Platform.OS === "ios" : false);
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === "ios");
     setDate(currentDate);
   };
 
@@ -70,10 +79,10 @@ const List = ({ navigation }) => {
   const getCategories = async () => {
     const query = collection(FIREBASE_DB, "categories");
     const snapshot = await getDocs(query);
-    const categories = [];
-    snapshot.docs?.forEach((doc) => {
-      categories.push({ label: doc.data().name, value: doc.data().name });
-    });
+    const categories = snapshot.docs.map((doc) => ({
+      label: doc.data().name,
+      value: doc.data().name,
+    }));
     setCategories(categories);
   };
 
@@ -123,7 +132,15 @@ const List = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: darkMode ? "#2b2042" : "white" }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: darkMode ? "#2b2042" : "white" },
+      ]}
+
+      contentContainerStyle={{ flexGrow: 1 }}
+      
+    >
       <View style={styles.dropDownPickers}>
         <View style={styles.catPicker}>
           <DropDownPicker
@@ -178,13 +195,29 @@ const List = ({ navigation }) => {
       </View>
 
       <View style={styles.notification}>
-        <Text style={darkMode ? styles.notificationTextDarkMode : styles.notificationText}>Notification</Text>
+        <Text
+          style={
+            darkMode
+              ? styles.notificationTextDarkMode
+              : styles.notificationText
+          }
+        >
+          Notification
+        </Text>
         <View style={styles.notifBtn}>
           <View style={styles.dateBtn}>
-            <Button color="#7402cc" onPress={showDatepicker} title="Date" />
+            <Button
+              color="#7402cc"
+              onPress={showDatepicker}
+              title="Date"
+            />
           </View>
           <View style={styles.dateBtn}>
-            <Button color="#7402cc" onPress={showTimepicker} title="Time" />
+            <Button
+              color="#7402cc"
+              onPress={showTimepicker}
+              title="Time"
+            />
           </View>
 
           {show && (
@@ -207,7 +240,13 @@ const List = ({ navigation }) => {
           onChangeText={(text) => setTitle(text)}
           value={title}
           maxLength={25}
-          style={[styles.input, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: darkMode ? "#5e5e5e" : "white",
+              color: darkMode ? "white" : "black",
+            },
+          ]}
         />
         <TextInput
           placeholder="Add note"
@@ -215,7 +254,13 @@ const List = ({ navigation }) => {
           onChangeText={(text) => setNote(text)}
           value={note}
           maxLength={150}
-          style={[styles.input, { backgroundColor: darkMode ? "#5e5e5e" : "white", color: darkMode ? "white" : "black" }]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: darkMode ? "#5e5e5e" : "white",
+              color: darkMode ? "white" : "black",
+            },
+          ]}
         />
         <View style={styles.btnContainer}>
           <Button
@@ -229,19 +274,57 @@ const List = ({ navigation }) => {
               setPrio(null);
             }}
             title="Add new note"
-            disabled={note === "" || title === "" || category === null || prio === null}
+            disabled={
+              note === "" || title === "" || category === null || prio === null
+            }
+          />
+        </View>
+
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder="Search by category..."
+            placeholderTextColor={darkMode ? "white" : "black"}
+            onChangeText={(text) => setSearchText(text)}
+            value={searchText}
+            style={[
+              styles.input,
+              {
+                backgroundColor: darkMode ? "#5e5e5e" : "white",
+                color: darkMode ? "white" : "black",
+              },
+            ]}
           />
         </View>
       </View>
+
       <View style={styles.line} />
-      <ScrollView>
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          docs.map((doc) => (
-            <View key={doc.name} style={[styles.categoryContainer, { backgroundColor: darkMode ? "#7402cc" : "#c9b2db" }]}>
+
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        docs
+          .filter((doc) =>
+            doc.name.toLowerCase().includes(searchText.toLowerCase())
+          )
+          .map((doc) => (
+            <View
+              key={doc.name}
+              style={[
+                styles.categoryContainer,
+                {
+                  backgroundColor: darkMode ? "#7402cc" : "#c9b2db",
+                },
+              ]}
+            >
               <View style={styles.noteContainer}>
-                <Text style={[styles.noteText, { color: darkMode ? "white" : "black" }]}>{doc.name}</Text>
+                <Text
+                  style={[
+                    styles.noteText,
+                    { color: darkMode ? "white" : "black" },
+                  ]}
+                >
+                  {doc.name}
+                </Text>
                 <Ionicons
                   name="trash-bin-outline"
                   size={24}
@@ -250,8 +333,7 @@ const List = ({ navigation }) => {
                 />
               </View>
               <View style={styles.childList}>
-                <
-                ChildrenList
+                <ChildrenList
                   key={doc.name}
                   path={`categories/${doc.name}/children`}
                   navigation={navigation}
@@ -259,15 +341,20 @@ const List = ({ navigation }) => {
               </View>
             </View>
           ))
-        )}
-      </ScrollView>
+      )}
 
-      <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeButton}>
+      <TouchableOpacity
+        onPress={toggleDarkMode}
+        style={styles.darkModeButton}
+      >
         <Text style={styles.darkModeButtonText}>
           {darkMode ? " ☀︎ " : " ☾ "}
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
+    
+
+    
   );
 };
 
@@ -275,7 +362,7 @@ export default List;
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 5,
+    paddingBottom: 100,
     height: "100%",
   },
   form: {
@@ -371,7 +458,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
     elevation: 3,
   },
-
   darkModeButton: {
     position: "absolute",
     bottom: 20,
@@ -383,5 +469,9 @@ const styles = StyleSheet.create({
   darkModeButtonText: {
     color: "white",
     fontSize: 26,
+  },
+  searchContainer: {
+    marginHorizontal: 15,
+    marginVertical: 10,
   },
 });
